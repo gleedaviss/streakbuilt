@@ -1,0 +1,1986 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STREAKBUILT</title>
+<meta name="description" content="StreakBuilt — Daily fitness streak tracker. No excuses.">
+<meta name="theme-color" content="#0b0c10">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="StreakBuilt">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&display=swap');
+
+  :root {
+    --bg: #0b0c10;
+    --bg2: #0f1117;
+    --bg3: #161820;
+    --card: #13141c;
+    --border: #1e2030;
+    --border2: #252840;
+    --lime: #00f5a0;
+    --lime2: #00c97a;
+    --electric: #7b61ff;
+    --red: #ff3b5c;
+    --orange: #ff7043;
+    --green: #00f5a0;
+    --yellow: #ffd600;
+    --text: #f2f4ff;
+    --text2: #7b7f9e;
+    --text3: #3d4060;
+    --font-head: 'Bebas Neue', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.5;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated mesh */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: 
+      radial-gradient(ellipse 60% 40% at 80% 0%, rgba(0,245,160,0.07) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 30% at 10% 90%, rgba(123,97,255,0.06) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── LAYOUT ── */
+  #app { max-width: 430px; margin: 0 auto; padding-bottom: 90px; }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px 12px;
+    position: sticky;
+    top: 0;
+    background: rgba(11,12,16,0.92);
+    backdrop-filter: blur(20px);
+    z-index: 100;
+    border-bottom: 1px solid var(--border);
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-head);
+    font-size: 26px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text);
+  }
+  .logo-icon {
+    width: 36px; height: 36px;
+    background: var(--bg3);
+    border-radius: 10px;
+    border: 1px solid var(--border2);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .logo span { color: var(--lime); }
+  .strict-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text2);
+    cursor: pointer;
+  }
+  .toggle-pill {
+    width: 36px; height: 20px;
+    border-radius: 10px;
+    background: var(--border2);
+    position: relative;
+    transition: background 0.3s;
+  }
+  .toggle-pill.active { background: var(--red); }
+  .toggle-pill::after {
+    content: '';
+    position: absolute;
+    top: 3px; left: 3px;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: #fff;
+    transition: transform 0.3s;
+  }
+  .toggle-pill.active::after { transform: translateX(16px); }
+
+  /* ── NAV ── */
+  .nav {
+    position: fixed;
+    bottom: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 100%; max-width: 430px;
+    background: rgba(13,14,20,0.98);
+    backdrop-filter: blur(24px);
+    border-top: 1px solid var(--border);
+    display: flex;
+    z-index: 200;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .nav-btn {
+    flex: 1;
+    padding: 10px 4px 12px;
+    background: none;
+    border: none;
+    color: var(--text3);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    font-family: var(--font-body);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+  .nav-btn svg { width: 22px; height: 22px; }
+  .nav-btn.active { color: var(--lime); }
+  .nav-btn:hover { color: var(--text2); }
+
+  /* ── SECTIONS ── */
+  .section { display: none; padding: 0 16px; animation: fadeIn 0.3s ease; }
+  .section.active { display: block; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 18px;
+    margin-bottom: 14px;
+  }
+  .card-title {
+    font-family: var(--font-body);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 14px;
+  }
+
+  /* ── DASHBOARD ── */
+  .streak-hero {
+    background: linear-gradient(145deg, #0f1520 0%, #0b0c10 100%);
+    border: 1px solid var(--border2);
+    border-radius: 24px;
+    padding: 32px 24px 28px;
+    margin: 16px 0 14px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .streak-hero::before {
+    content: '';
+    position: absolute;
+    top: -60px; left: 50%;
+    transform: translateX(-50%);
+    width: 240px; height: 240px;
+    background: radial-gradient(circle, rgba(0,245,160,0.12) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .streak-hero::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0,245,160,0.3), transparent);
+  }
+  .flame-wrap {
+    width: 64px; height: 64px;
+    margin: 0 auto 12px;
+    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, rgba(0,245,160,0.15), rgba(123,97,255,0.1));
+    border-radius: 20px;
+    border: 1px solid rgba(0,245,160,0.2);
+    animation: pulse-glow 3s infinite alternate;
+  }
+  @keyframes pulse-glow {
+    0%   { box-shadow: 0 0 0 rgba(0,245,160,0); border-color: rgba(0,245,160,0.2); }
+    100% { box-shadow: 0 0 30px rgba(0,245,160,0.2); border-color: rgba(0,245,160,0.5); }
+  }
+  @keyframes flicker {
+    0%   { transform: scaleY(1) scaleX(1); }
+    30%  { transform: scaleY(1.04) scaleX(0.98); }
+    100% { transform: scaleY(1.06) scaleX(0.97); }
+  }
+  .streak-num {
+    font-family: var(--font-head);
+    font-size: 96px;
+    line-height: 1;
+    color: var(--lime);
+    letter-spacing: -2px;
+    text-shadow: 0 0 60px rgba(0,245,160,0.3);
+  }
+  .streak-label {
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--text2);
+    margin-top: 4px;
+  }
+  .streak-msg {
+    margin-top: 16px;
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    padding: 10px 16px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.04);
+  }
+  .streak-msg.good { color: var(--lime); border: 1px solid rgba(0,245,160,0.25); }
+  .streak-msg.warn { color: var(--yellow); border: 1px solid rgba(255,214,0,0.25); }
+  .streak-msg.bad  { color: var(--red);   border: 1px solid rgba(255,59,92,0.25); }
+
+  .stats-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .stat-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px;
+  }
+  .stat-val {
+    font-family: var(--font-head);
+    font-size: 38px;
+    color: var(--text);
+    line-height: 1;
+  }
+  .stat-lbl {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text2);
+    margin-top: 4px;
+  }
+
+  .progress-wrap { margin-bottom: 14px; }
+  .prog-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text2);
+    margin-bottom: 7px;
+  }
+  .prog-bar {
+    height: 5px;
+    background: var(--border2);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .prog-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--lime2), var(--lime));
+    transition: width 0.8s cubic-bezier(.4,0,.2,1);
+  }
+
+  /* ── CALENDAR ── */
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+    margin-top: 8px;
+  }
+  .cal-day {
+    aspect-ratio: 1;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-head);
+    font-size: 11px;
+    font-weight: 700;
+    background: var(--bg3);
+    color: var(--text3);
+    border: 1px solid var(--border);
+  }
+  .cal-day.done { background: rgba(255,92,0,0.18); color: var(--orange); border-color: rgba(255,92,0,0.3); font-size: 13px; }
+  .cal-day.missed { background: rgba(232,32,32,0.1); color: var(--red); border-color: rgba(232,32,32,0.2); }
+  .cal-day.today { border-color: var(--orange); color: var(--text); }
+
+  /* ── CHECKLIST ── */
+  .check-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    user-select: none;
+  }
+  .check-item:last-child { border-bottom: none; }
+  .check-box {
+    width: 26px; height: 26px;
+    border-radius: 8px;
+    border: 2px solid var(--border2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s;
+  }
+  .check-box.checked {
+    background: var(--lime);
+    border-color: var(--lime);
+  }
+  .check-box svg { width: 14px; height: 14px; opacity: 0; transition: opacity 0.2s; }
+  .check-box.checked svg { opacity: 1; }
+  .check-text { flex: 1; }
+  .check-text strong { display: block; font-weight: 600; font-size: 15px; }
+  .check-text span { font-size: 12px; color: var(--text2); }
+
+  /* ── WORKOUT ── */
+  .day-tabs {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    margin-bottom: 14px;
+    scrollbar-width: none;
+  }
+  .day-tabs::-webkit-scrollbar { display: none; }
+  .day-tab {
+    flex-shrink: 0;
+    padding: 8px 16px;
+    border-radius: 50px;
+    border: 1px solid var(--border2);
+    background: none;
+    color: var(--text2);
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .day-tab.active {
+    background: var(--lime);
+    border-color: var(--lime);
+    color: #000;
+  }
+
+  .exercise-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .exercise-row:last-child { border-bottom: none; }
+  .ex-icon { font-size: 18px; width: 28px; text-align: center; }
+  .ex-img {
+    width: 52px; height: 52px;
+    border-radius: 10px;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 1px solid var(--border2);
+  }
+  .ex-info { flex: 1; }
+  .ex-name { font-weight: 600; font-size: 14px; }
+  .ex-sets { font-size: 12px; color: var(--text2); }
+  .rep-input {
+    width: 56px;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 13px;
+    padding: 5px 8px;
+    text-align: center;
+    outline: none;
+  }
+  .rep-input:focus { border-color: var(--orange); }
+
+  .done-btn {
+    width: 100%;
+    padding: 16px;
+    background: var(--lime);
+    border: none;
+    border-radius: 14px;
+    color: #000;
+    font-family: var(--font-head);
+    font-size: 18px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    cursor: pointer;
+    margin-top: 14px;
+    transition: opacity 0.2s, transform 0.1s;
+    font-weight: 700;
+  }
+  .done-btn:hover { opacity: 0.9; }
+  .done-btn:active { transform: scale(0.98); }
+  .done-btn.completed {
+    background: var(--border2);
+    color: var(--lime);
+    border: 1px solid rgba(0,245,160,0.3);
+  }
+
+  /* ── DIET ── */
+  .diet-toggle {
+    display: flex;
+    background: var(--bg3);
+    border-radius: 12px;
+    padding: 4px;
+    margin-bottom: 14px;
+    border: 1px solid var(--border);
+  }
+  .diet-btn {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 9px;
+    background: none;
+    color: var(--text2);
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .diet-btn.active {
+    background: var(--lime);
+    color: #000;
+  }
+
+  .meal-card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 10px;
+  }
+  .meal-time {
+    font-family: var(--font-head);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--orange);
+    margin-bottom: 6px;
+  }
+  .meal-items { font-size: 14px; color: var(--text); line-height: 1.7; }
+  .meal-items li { list-style: none; padding-left: 0; }
+  .meal-items li::before { content: '—  '; color: var(--text3); }
+
+  .yn-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 14px;
+  }
+  .yn-btn {
+    padding: 14px;
+    border-radius: 12px;
+    border: 1.5px solid var(--border2);
+    background: none;
+    color: var(--text2);
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .yn-btn.yes.active { background: rgba(0,245,160,0.12); border-color: var(--lime); color: var(--lime); }
+  .yn-btn.no.active  { background: rgba(255,59,92,0.12); border-color: var(--red); color: var(--red); }
+
+  /* ── SCHEDULE ── */
+  .schedule-item {
+    display: flex;
+    gap: 16px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .schedule-item:last-child { border-bottom: none; }
+  .sched-time {
+    font-family: var(--font-head);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    color: var(--orange);
+    text-transform: uppercase;
+    width: 70px;
+    flex-shrink: 0;
+    padding-top: 1px;
+  }
+  .sched-title { font-weight: 600; font-size: 14px; }
+  .sched-desc  { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+  /* ── PROGRESS ── */
+  .weight-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .weight-input {
+    flex: 1;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 16px;
+    padding: 10px 14px;
+    outline: none;
+  }
+  .weight-input:focus { border-color: var(--orange); }
+  .weight-unit {
+    font-family: var(--font-head);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text2);
+  }
+  .log-btn {
+    padding: 10px 20px;
+    background: var(--lime);
+    border: none;
+    border-radius: 10px;
+    color: #000;
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    cursor: pointer;
+  }
+
+  .consistency-big {
+    font-family: var(--font-head);
+    font-size: 64px;
+    color: var(--lime);
+    line-height: 1;
+    text-align: center;
+    padding: 10px 0 4px;
+  }
+
+  .history-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .history-row:last-child { border-bottom: none; }
+  .h-date { color: var(--text2); }
+  .h-weight { font-weight: 600; }
+  .h-feel { font-size: 12px; }
+  .h-feel.yes { color: var(--green); }
+  .h-feel.no  { color: var(--red); }
+
+  /* ── MODAL ── */
+  .modal-bg {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: flex-end;
+    z-index: 999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .modal-bg.show { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 24px 24px 0 0;
+    padding: 28px 20px 44px;
+    width: 100%; max-width: 430px;
+    margin: 0 auto;
+    transform: translateY(60px);
+    transition: transform 0.3s cubic-bezier(.4,0,.2,1);
+  }
+  .modal-bg.show .modal { transform: translateY(0); }
+  .modal-title {
+    font-family: var(--font-head);
+    font-size: 28px;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+  }
+  .modal-body { font-size: 14px; color: var(--text2); line-height: 1.7; margin-bottom: 22px; }
+  .modal-actions { display: flex; gap: 10px; }
+  .modal-btn {
+    flex: 1;
+    padding: 14px;
+    border-radius: 12px;
+    border: none;
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    cursor: pointer;
+    text-transform: uppercase;
+  }
+  .modal-btn.primary { background: var(--lime); color: #000; }
+  .modal-btn.secondary { background: var(--border2); color: var(--text2); }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed;
+    top: 76px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 50px;
+    padding: 11px 22px;
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 500;
+    transition: all 0.4s cubic-bezier(.4,0,.2,1);
+    max-width: calc(100vw - 40px);
+    text-align: center;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.good { border-color: var(--green); color: var(--green); }
+  .toast.bad  { border-color: var(--red);   color: var(--red);   }
+  .toast.info { border-color: var(--orange); color: var(--orange); }
+
+  /* ── SECTION HEADING ── */
+  .sec-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 18px 0 10px;
+  }
+  .sec-head-title {
+    font-family: var(--font-head);
+    font-size: 28px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .sec-head-line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 3px; height: 3px; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  /* Responsive */
+  @media (min-width: 431px) {
+    #app { box-shadow: 0 0 80px rgba(0,0,0,0.9); }
+  }
+
+  /* ── LOCK SCREEN ── */
+  #lockScreen {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 28px 48px;
+    animation: fadeIn 0.4s ease;
+  }
+  #lockScreen.hidden { display: none; }
+
+  .lock-logo {
+    font-family: var(--font-head);
+    font-size: 36px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .lock-logo span { color: var(--lime); }
+  .lock-tagline {
+    font-family: var(--font-head);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 44px;
+  }
+
+  .lock-flame {
+    font-size: 56px;
+    display: block;
+    margin-bottom: 32px;
+    animation: flicker 2s infinite alternate;
+    filter: drop-shadow(0 0 20px rgba(255,92,0,0.5));
+  }
+
+  .lock-step { width: 100%; max-width: 340px; }
+
+  .lock-label {
+    font-family: var(--font-head);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 8px;
+  }
+
+  .lock-input {
+    width: 100%;
+    background: var(--bg3);
+    border: 1.5px solid var(--border2);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 16px;
+    padding: 14px 16px;
+    outline: none;
+    transition: border-color 0.2s;
+    margin-bottom: 14px;
+    -webkit-appearance: none;
+  }
+  .lock-input:focus { border-color: var(--orange); }
+  .lock-input.error { border-color: var(--red); animation: shake 0.4s; }
+
+  @keyframes shake {
+    0%,100%{ transform:translateX(0); }
+    20%{ transform:translateX(-8px); }
+    40%{ transform:translateX(8px); }
+    60%{ transform:translateX(-6px); }
+    80%{ transform:translateX(6px); }
+  }
+
+  /* PIN PAD */
+  .pin-display {
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+    margin-bottom: 28px;
+  }
+  .pin-dot {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    border: 2px solid var(--border2);
+    transition: all 0.2s;
+  }
+  .pin-dot.filled { background: var(--lime); border-color: var(--lime); box-shadow: 0 0 10px rgba(0,245,160,0.4); }
+  .pin-dot.error  { background: var(--red);    border-color: var(--red); }
+
+  .pin-pad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    max-width: 280px;
+    margin: 0 auto 20px;
+  }
+  .pin-key {
+    aspect-ratio: 1;
+    border-radius: 50%;
+    border: 1.5px solid var(--border2);
+    background: var(--bg3);
+    color: var(--text);
+    font-family: var(--font-head);
+    font-size: 22px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+  .pin-key:active { background: var(--lime); border-color: var(--lime); color: #000; transform: scale(0.93); }
+  .pin-key.del { background: none; border-color: transparent; color: var(--text2); font-size: 18px; }
+  .pin-key.del:active { background: var(--border2); }
+  .pin-key.empty { visibility: hidden; }
+
+  .lock-err {
+    text-align: center;
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: var(--red);
+    min-height: 20px;
+    margin-bottom: 8px;
+  }
+
+  .lock-next-btn {
+    width: 100%;
+    max-width: 340px;
+    padding: 16px;
+    background: var(--lime);
+    border: none;
+    border-radius: 14px;
+    color: #000;
+    font-family: var(--font-head);
+    font-size: 18px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    cursor: pointer;
+    margin-top: 6px;
+    -webkit-tap-highlight-color: transparent;
+    transition: opacity 0.2s;
+  }
+  .lock-next-btn:active { opacity: 0.85; }
+
+  .lock-remember {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 18px;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .lock-remember input { display: none; }
+  .lock-remember-box {
+    width: 20px; height: 20px;
+    border-radius: 5px;
+    border: 2px solid var(--border2);
+    background: var(--bg3);
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+  .lock-remember-box.checked { background: var(--lime); border-color: var(--lime); }
+  .lock-remember-box svg { width: 12px; height: 12px; opacity: 0; transition: opacity 0.2s; }
+  .lock-remember-box.checked svg { opacity: 1; stroke: #000; }
+  .lock-remember-lbl {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text2);
+  }
+
+  .lock-logout {
+    position: absolute;
+    top: 18px; right: 18px;
+    background: none;
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    padding: 7px 12px;
+    color: var(--text3);
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    cursor: pointer;
+    display: none;
+  }
+</style>
+</head>
+<body>
+<!-- LOCK SCREEN -->
+<div id="lockScreen">
+  <button class="lock-logout" id="lockLogoutBtn" onclick="doLogout()">LOGOUT</button>
+  <!-- App Icon -->
+  <div style="width:80px;height:80px;background:#0f1117;border-radius:22px;border:1px solid #252840;display:flex;align-items:center;justify-content:center;margin-bottom:20px;box-shadow:0 0 40px rgba(0,245,160,0.15);">
+    <svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <polygon points="25,3 11,22 21,22 19,41 33,22 23,22" fill="#00f5a0"/>
+    </svg>
+  </div>
+  <div class="lock-logo">Streak<span>Built</span></div>
+  <div class="lock-tagline">No Excuses. No Access Without Auth.</div>
+
+  <!-- Step 1: Email -->
+  <div class="lock-step" id="stepEmail">
+    <div class="lock-label">Your Email</div>
+    <input class="lock-input" id="emailInput" type="email" placeholder="Enter email address"
+      autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false">
+    <div class="lock-err" id="emailErr"></div>
+    <button class="lock-next-btn" onclick="submitEmail()">CONTINUE</button>
+  </div>
+
+  <!-- Step 2: PIN -->
+  <div class="lock-step" id="stepPin" style="display:none; text-align:center;">
+    <div class="lock-label" style="text-align:center;">Enter Your PIN</div>
+    <div class="pin-display">
+      <div class="pin-dot" id="pd0"></div>
+      <div class="pin-dot" id="pd1"></div>
+      <div class="pin-dot" id="pd2"></div>
+      <div class="pin-dot" id="pd3"></div>
+    </div>
+    <div class="lock-err" id="pinErr"></div>
+    <div class="pin-pad">
+      <button class="pin-key" onclick="pinKey('1')">1</button>
+      <button class="pin-key" onclick="pinKey('2')">2</button>
+      <button class="pin-key" onclick="pinKey('3')">3</button>
+      <button class="pin-key" onclick="pinKey('4')">4</button>
+      <button class="pin-key" onclick="pinKey('5')">5</button>
+      <button class="pin-key" onclick="pinKey('6')">6</button>
+      <button class="pin-key" onclick="pinKey('7')">7</button>
+      <button class="pin-key" onclick="pinKey('8')">8</button>
+      <button class="pin-key" onclick="pinKey('9')">9</button>
+      <button class="pin-key empty"></button>
+      <button class="pin-key" onclick="pinKey('0')">0</button>
+      <button class="pin-key del" onclick="pinBack()">⌫</button>
+    </div>
+    <label class="lock-remember" onclick="toggleRemember()">
+      <div class="lock-remember-box" id="rememberBox">
+        <svg viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><polyline points="2 6 5 9 10 3"/></svg>
+      </div>
+      <span class="lock-remember-lbl">Keep me logged in on this device</span>
+    </label>
+  </div>
+</div>
+
+<div id="app">
+
+  <!-- TOP BAR -->
+  <header class="topbar">
+    <div class="logo">
+      <div class="logo-icon">
+        <svg width="22" height="22" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <polygon points="25,3 11,22 21,22 19,41 33,22 23,22" fill="#00f5a0"/>
+        </svg>
+      </div>
+      Streak<span>Built</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <button onclick="downloadApp()" title="Download App" style="background:none;border:1px solid var(--lime);border-radius:50px;padding:6px 14px;color:var(--lime);font-family:var(--font-body);font-size:11px;font-weight:700;letter-spacing:1px;cursor:pointer;">⬇ SAVE</button>
+      <button onclick="doLogout()" style="background:none;border:1px solid var(--border2);border-radius:50px;padding:6px 12px;color:var(--text3);font-family:var(--font-body);font-size:11px;font-weight:700;letter-spacing:1px;cursor:pointer;">OUT</button>
+      <div class="strict-toggle" id="strictToggle" onclick="toggleStrict()">
+        <div class="toggle-pill" id="strictPill"></div>
+        STRICT
+      </div>
+    </div>
+  </header>
+
+  <!-- DASHBOARD -->
+  <section class="section active" id="sec-home">
+
+    <div class="streak-hero">
+      <div class="flame-wrap">
+        <svg width="32" height="32" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <polygon points="25,3 11,22 21,22 19,41 33,22 23,22" fill="#00f5a0"/>
+        </svg>
+      </div>
+      <div class="streak-num" id="streakNum">0</div>
+      <div class="streak-label">Day Streak</div>
+      <div class="streak-msg warn" id="streakMsg">Start your streak today.</div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-box">
+        <div class="stat-val" id="bestStreakVal">0</div>
+        <div class="stat-lbl">Longest Streak</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val" id="todayPct">0%</div>
+        <div class="stat-lbl">Today Done</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Today's Progress</div>
+      <div id="progressBars"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">This Month</div>
+      <div class="cal-grid" id="calGrid"></div>
+    </div>
+
+    <div class="card" id="completedHistoryCard">
+      <div class="card-title">Completed Days</div>
+      <div id="completedHistoryList"><span style="color:var(--text3);font-size:13px;">No completed days yet. Start your streak!</span></div>
+    </div>
+
+  </section>
+
+  <!-- DAILY CHECKLIST -->
+  <section class="section" id="sec-check">
+    <div class="sec-head">
+      <div class="sec-head-title">Daily Checklist</div>
+      <div class="sec-head-line"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Lock In Today — No Half-Measures</div>
+      <div id="checklistItems"></div>
+    </div>
+
+    <button class="done-btn" id="protectBtn" onclick="protectStreak()">
+      ✓ PROTECT STREAK
+    </button>
+  </section>
+
+  <!-- WORKOUT -->
+  <section class="section" id="sec-workout">
+    <div class="sec-head">
+      <div class="sec-head-title">Workout</div>
+      <div class="sec-head-line"></div>
+    </div>
+
+    <div class="day-tabs" id="dayTabs"></div>
+    <div class="card" id="workoutContent"></div>
+  </section>
+
+  <!-- DIET -->
+  <section class="section" id="sec-diet">
+    <div class="sec-head">
+      <div class="sec-head-title">Diet Plan</div>
+      <div class="sec-head-line"></div>
+    </div>
+
+    <div class="diet-toggle">
+      <button class="diet-btn active" id="dietBulk" onclick="setDiet('bulk')">SIZE (BULK)</button>
+      <button class="diet-btn" id="dietCut"  onclick="setDiet('cut')">ABS (CUT)</button>
+    </div>
+
+    <div id="dietContent"></div>
+
+    <div class="card">
+      <div class="card-title">Did You Follow The Plan Today?</div>
+      <div class="yn-row">
+        <button class="yn-btn yes" id="dietYes" onclick="logDiet(true)">✓ YES</button>
+        <button class="yn-btn no"  id="dietNo"  onclick="logDiet(false)">✗ NO</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Daily Schedule</div>
+      <div class="schedule-item">
+        <div class="sched-time">Morning</div>
+        <div><div class="sched-title">Breakfast</div><div class="sched-desc" id="schBreakfast">—</div></div>
+      </div>
+      <div class="schedule-item">
+        <div class="sched-time">Afternoon</div>
+        <div><div class="sched-title">Lunch</div><div class="sched-desc" id="schLunch">—</div></div>
+      </div>
+      <div class="schedule-item">
+        <div class="sched-time">Evening</div>
+        <div><div class="sched-title">Workout</div><div class="sched-desc">Execute your plan. No delays.</div></div>
+      </div>
+      <div class="schedule-item">
+        <div class="sched-time">Night</div>
+        <div><div class="sched-title">Dinner</div><div class="sched-desc" id="schDinner">—</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROGRESS -->
+  <section class="section" id="sec-progress">
+    <div class="sec-head">
+      <div class="sec-head-title">Progress</div>
+      <div class="sec-head-line"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Consistency Score</div>
+      <div class="consistency-big" id="consistencyPct">—</div>
+      <div style="text-align:center;font-size:12px;color:var(--text2);margin-bottom:12px;">Last 30 days</div>
+      <div class="prog-bar">
+        <div class="prog-fill" id="consistencyBar" style="width:0%"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Weekly Check-In</div>
+      <div class="weight-row">
+        <input class="weight-input" id="weightInput" type="number" placeholder="Body weight" min="30" max="250" step="0.1">
+        <span class="weight-unit">kg</span>
+        <button class="log-btn" onclick="logWeight()">LOG</button>
+      </div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:12px;font-weight:600;">Do you feel stronger this week?</div>
+      <div class="yn-row">
+        <button class="yn-btn yes" id="feelYes" onclick="logFeel(true)">✓ YES</button>
+        <button class="yn-btn no"  id="feelNo"  onclick="logFeel(false)">✗ NO</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Weight History</div>
+      <div id="weightHistory"><span style="color:var(--text3);font-size:13px;">No data yet. Start logging.</span></div>
+    </div>
+
+  </section>
+
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <div class="modal-title" id="modalTitle">Streak Reset</div>
+    <div class="modal-body" id="modalBody">Your streak is about to be reset.</div>
+    <div class="modal-actions">
+      <button class="modal-btn secondary" id="modalCancel" onclick="closeModal()">Not Yet</button>
+      <button class="modal-btn primary" id="modalConfirm">Understood</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- BOTTOM NAV -->
+<nav class="nav">
+  <button class="nav-btn active" data-sec="home" onclick="goTo('home',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    Home
+  </button>
+  <button class="nav-btn" data-sec="check" onclick="goTo('check',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    Daily
+  </button>
+  <button class="nav-btn" data-sec="workout" onclick="goTo('workout',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+    Workout
+  </button>
+  <button class="nav-btn" data-sec="diet" onclick="goTo('diet',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8zM6 1v3M10 1v3M14 1v3"/></svg>
+    Diet
+  </button>
+  <button class="nav-btn" data-sec="progress" onclick="goTo('progress',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    Progress
+  </button>
+</nav>
+
+<script>
+// ═══════════════════════════════════════════
+//  DATA
+// ═══════════════════════════════════════════
+const WORKOUTS = {
+  'Day 1: Push': [
+    { img:'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=80&h=80&fit=crop', name:'Push-ups',         sets:'4 sets × max reps' },
+    { img:'https://images.unsplash.com/photo-1598971639058-fab3c3109a23?w=80&h=80&fit=crop', name:'Decline Push-ups', sets:'3 sets × 12' },
+    { img:'https://images.unsplash.com/photo-1544033527-b192daee1f5b?w=80&h=80&fit=crop', name:'Pike Push-ups',    sets:'3 sets × 10' },
+    { img:'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=80&h=80&fit=crop', name:'Dips',             sets:'3 sets × max reps' },
+    { img:'https://images.unsplash.com/photo-1616803689943-5601631c7fec?w=80&h=80&fit=crop', name:'Diamond Push-ups', sets:'2 sets × 10' },
+  ],
+  'Day 2: Pull': [
+    { img:'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=80&h=80&fit=crop', name:'Pull-ups',       sets:'4 sets × max reps' },
+    { img:'https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?w=80&h=80&fit=crop', name:'Chin-ups',       sets:'3 sets × 8' },
+    { img:'https://images.unsplash.com/photo-1584735935682-2f2b69dff9d2?w=80&h=80&fit=crop', name:'Towel Rows',     sets:'3 sets × 12' },
+    { img:'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=80&h=80&fit=crop', name:'Backpack Curls', sets:'3 sets × 15' },
+    { img:'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=80&h=80&fit=crop', name:'Superman Hold',  sets:'3 sets × 30 sec' },
+  ],
+  'Day 3: Legs': [
+    { img:'https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=80&h=80&fit=crop', name:'Squats',                  sets:'4 sets × 20' },
+    { img:'https://images.unsplash.com/photo-1434682881908-b43d0467b798?w=80&h=80&fit=crop', name:'Lunges',                  sets:'3 sets × 12 each' },
+    { img:'https://images.unsplash.com/photo-1581009137042-c552e485697a?w=80&h=80&fit=crop', name:'Bulgarian Split Squats',  sets:'3 sets × 10 each' },
+    { img:'https://images.unsplash.com/photo-1518310383802-640c2de311b6?w=80&h=80&fit=crop', name:'Calf Raises',             sets:'4 sets × 20' },
+    { img:'https://images.unsplash.com/photo-1566241142559-40e1dab266c6?w=80&h=80&fit=crop', name:'Plank',                   sets:'3 sets × 60 sec' },
+    { img:'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=80&h=80&fit=crop', name:'Leg Raises',              sets:'3 sets × 15' },
+    { img:'https://images.unsplash.com/photo-1600965962102-9d260a71890d?w=80&h=80&fit=crop', name:'Sit-ups',                 sets:'3 sets × 20' },
+  ],
+  'Day 4: Rest': [
+    { img:'https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?w=80&h=80&fit=crop', name:'Light Walk',       sets:'20–30 min' },
+    { img:'https://images.unsplash.com/photo-1599901860904-17e6ed7083a0?w=80&h=80&fit=crop', name:'Stretching',       sets:'15 min full body' },
+    { img:'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=80&h=80&fit=crop', name:'Deep Breathing',   sets:'5 min box breathing' },
+  ],
+  'Day 5: Full': [
+    { img:'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=80&h=80&fit=crop', name:'Push-ups',  sets:'4 sets × max reps' },
+    { img:'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=80&h=80&fit=crop', name:'Pull-ups',  sets:'4 sets × max reps' },
+    { img:'https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=80&h=80&fit=crop', name:'Squats',    sets:'4 sets × 20' },
+    { img:'https://images.unsplash.com/photo-1566241142559-40e1dab266c6?w=80&h=80&fit=crop', name:'Plank',     sets:'3 sets × 60 sec' },
+  ],
+};
+
+const DIET = {
+  bulk: {
+    label: 'Size (Lean Bulk)',
+    meals: {
+      Breakfast: ['3 eggs scrambled', 'Bread (2 slices) or oats + milk', 'Banana'],
+      Lunch:     ['Ugali (medium portion)', 'Beans or lentils', 'Sukuma wiki', 'Avocado'],
+      Dinner:    ['Rice or ugali', 'Eggs or chicken breast', 'Vegetables'],
+      Snacks:    ['Groundnuts', 'Milk (1 glass)', 'Bananas', 'Peanut butter'],
+    },
+    schedule: { b:'Oats + milk + eggs', l:'Ugali + beans + sukuma', d:'Rice + chicken + veg' }
+  },
+  cut: {
+    label: 'Abs (Lean Cut)',
+    meals: {
+      Breakfast: ['3–4 eggs (boiled)', 'Vegetables (no bread)', 'Black coffee or green tea'],
+      Lunch:     ['Grilled chicken or fish', 'Sukuma wiki or spinach', 'Small ugali or brown rice'],
+      Dinner:    ['Boiled eggs (2)', 'Steamed vegetables', 'No heavy carbs'],
+      Snacks:    ['Groundnuts (small)', 'Water + lemon', 'Cucumber'],
+    },
+    schedule: { b:'Boiled eggs + veggies', l:'Grilled chicken + sukuma', d:'Eggs + steamed veg' }
+  }
+};
+
+const CHECKLIST = [
+  { id:'workout',  icon:'🏋️', label:'Workout Completed',    desc:'Hit the session. No skipping.' },
+  { id:'meals',    icon:'🥗', label:'Meals Followed',        desc:'Stuck to the diet plan.' },
+  { id:'water',    icon:'💧', label:'Water Intake (2–3L)',   desc:'Track every glass.' },
+  { id:'sleep',    icon:'😴', label:'Sleep (6–8 hours)',     desc:'Recovery is non-negotiable.' },
+];
+
+// ═══════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════
+let state = loadState();
+
+function defaultState() {
+  return {
+    streak: 0,
+    bestStreak: 0,
+    lastDate: null,
+    strictMode: true,
+    dietMode: 'bulk',
+    activeWorkoutDay: 'Day 1: Push',
+    history: {},       // { 'YYYY-MM-DD': { checklist:{}, protected:bool } }
+    weights: [],       // [ { date, kg, feel } ]
+    reps: {},          // { 'Day:exercise': val }
+    dietFollowed: null,
+  };
+}
+
+function loadState() {
+  try {
+    const s = localStorage.getItem('streakbuilt_v2');
+    return s ? Object.assign(defaultState(), JSON.parse(s)) : defaultState();
+  } catch { return defaultState(); }
+}
+
+function saveState() {
+  localStorage.setItem('streakbuilt_v2', JSON.stringify(state));
+}
+
+// ═══════════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════════
+function today() {
+  return new Date().toISOString().split('T')[0];
+}
+function todayEntry() {
+  const d = today();
+  if (!state.history[d]) state.history[d] = { checklist:{}, protected: false };
+  return state.history[d];
+}
+function todayChecked() {
+  const e = todayEntry();
+  return CHECKLIST.filter(c => e.checklist[c.id]).length;
+}
+function todayPct() {
+  return Math.round((todayChecked() / CHECKLIST.length) * 100);
+}
+
+// ═══════════════════════════════════════════
+//  STREAK LOGIC
+// ═══════════════════════════════════════════
+function checkStreakOnLoad() {
+  const d = today();
+  const last = state.lastDate;
+  if (!last || last === d) return;
+
+  const diff = Math.floor((new Date(d) - new Date(last)) / 86400000);
+  if (diff >= 1) {
+    const lastEntry = state.history[last];
+    const lastDone = lastEntry && lastEntry.protected;
+    if (!lastDone) {
+      if (state.strictMode) {
+        if (state.streak > 0) showModal('Streak Reset', `You didn't complete yesterday. Your ${state.streak}-day streak is gone. That's what happens.`, () => {
+          state.streak = 0;
+          saveState();
+          updateDashboard();
+        });
+        state.streak = 0;
+      } else {
+        showToast('⚠️ You slipped yesterday. Warning logged.', 'bad');
+      }
+    }
+  }
+  if (diff > 1 && state.strictMode) {
+    state.streak = 0;
+  }
+  saveState();
+}
+
+// ═══════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════
+function goTo(sec, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('sec-' + sec).classList.add('active');
+  btn.classList.add('active');
+  if (sec === 'home') updateDashboard();
+  if (sec === 'check') renderChecklist();
+  if (sec === 'workout') renderWorkout();
+  if (sec === 'diet') renderDiet();
+  if (sec === 'progress') renderProgress();
+}
+
+// ═══════════════════════════════════════════
+//  DASHBOARD
+// ═══════════════════════════════════════════
+function updateDashboard() {
+  document.getElementById('streakNum').textContent = state.streak;
+  document.getElementById('bestStreakVal').textContent = state.bestStreak;
+  const pct = todayPct();
+  document.getElementById('todayPct').textContent = pct + '%';
+
+  const msg = document.getElementById('streakMsg');
+  const entry = todayEntry();
+  if (entry.protected) {
+    msg.textContent = 'Streak protected. Stay sharp.';
+    msg.className = 'streak-msg good';
+  } else if (pct >= 75) {
+    msg.textContent = 'Almost there. Finish what you started.';
+    msg.className = 'streak-msg warn';
+  } else if (pct > 0) {
+    msg.textContent = "You're slipping. Fix it today.";
+    msg.className = 'streak-msg warn';
+  } else {
+    msg.textContent = 'No work done. No excuses.';
+    msg.className = 'streak-msg bad';
+  }
+
+  // progress bars
+  const pb = document.getElementById('progressBars');
+  pb.innerHTML = '';
+  const items = [
+    { label:'Checklist',    val: todayPct() },
+    { label:'Workout',      val: entry.checklist.workout ? 100 : 0 },
+    { label:'Diet',         val: entry.checklist.meals   ? 100 : 0 },
+    { label:'Hydration',    val: entry.checklist.water   ? 100 : 0 },
+  ];
+  items.forEach(item => {
+    pb.innerHTML += `
+      <div class="progress-wrap">
+        <div class="prog-label"><span>${item.label}</span><span>${item.val}%</span></div>
+        <div class="prog-bar"><div class="prog-fill" style="width:${item.val}%"></div></div>
+      </div>`;
+  });
+
+  renderCalendar();
+  renderCompletedHistory();
+}
+
+function renderCalendar() {
+  const grid = document.getElementById('calGrid');
+  const now = new Date();
+  const year = now.getFullYear(), month = now.getMonth();
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const todayStr = today();
+
+  let html = '';
+  for (let i = 0; i < firstDay; i++) html += `<div class="cal-day"></div>`;
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const entry = state.history[dateStr];
+    let cls = 'cal-day';
+    if (dateStr === todayStr) cls += ' today';
+    else if (entry && entry.protected) cls += ' done';
+    else if (entry && new Date(dateStr) < new Date(todayStr)) cls += ' missed';
+  html += `<div class="${cls}" title="${entry && entry.protected ? '✓ Completed' : (dateStr < todayStr ? 'Missed' : '')}">${entry && entry.protected ? '🔥' : d}</div>`;
+  }
+  grid.innerHTML = html;
+}
+
+function renderCompletedHistory() {
+  const list = document.getElementById('completedHistoryList');
+  const allDone = Object.entries(state.history)
+    .filter(([, e]) => e && e.protected)
+    .sort((a, b) => b[0].localeCompare(a[0]));
+
+  if (allDone.length === 0) {
+    list.innerHTML = '<span style="color:var(--text3);font-size:13px;">No completed days yet. Start your streak!</span>';
+    return;
+  }
+
+  list.innerHTML = allDone.map(([date, entry]) => {
+    const d = new Date(date);
+    const label = d.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric', year:'numeric' });
+    const checks = entry.checklist ? Object.keys(entry.checklist).filter(k => entry.checklist[k]) : [];
+    const icons = { workout:'🏋️', meals:'🥗', water:'💧', sleep:'😴' };
+    const badges = checks.map(k => icons[k] || '✓').join(' ');
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);">
+      <div>
+        <span style="font-size:14px;font-weight:600;">🔥 ${label}</span>
+        <div style="font-size:12px;color:var(--text2);margin-top:2px;">${badges || '—'}</div>
+      </div>
+      <span style="color:var(--green);font-family:var(--font-head);font-size:12px;font-weight:800;letter-spacing:1px;">DONE</span>
+    </div>`;
+  }).join('');
+}
+
+
+// ═══════════════════════════════════════════
+function renderChecklist() {
+  const entry = todayEntry();
+  const wrap = document.getElementById('checklistItems');
+  wrap.innerHTML = '';
+  CHECKLIST.forEach(item => {
+    const checked = !!entry.checklist[item.id];
+    wrap.innerHTML += `
+      <div class="check-item" onclick="toggleCheck('${item.id}')">
+        <div class="check-box ${checked ? 'checked' : ''}" id="cb_${item.id}">
+          <svg viewBox="0 0 14 14" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><polyline points="2 7 5.5 10.5 12 3"/></svg>
+        </div>
+        <div class="check-text">
+          <strong>${item.icon} ${item.label}</strong>
+          <span>${item.desc}</span>
+        </div>
+      </div>`;
+  });
+
+  const btn = document.getElementById('protectBtn');
+  if (entry.protected) {
+    btn.textContent = '✓ STREAK PROTECTED';
+    btn.classList.add('completed');
+  } else {
+    btn.textContent = '✓ PROTECT STREAK';
+    btn.classList.remove('completed');
+  }
+}
+
+function toggleCheck(id) {
+  const entry = todayEntry();
+  if (entry.protected) { showToast('Already locked in. Good.', 'good'); return; }
+  entry.checklist[id] = !entry.checklist[id];
+  state.lastDate = today();
+  saveState();
+  renderChecklist();
+  updateDashboard();
+}
+
+function protectStreak() {
+  const entry = todayEntry();
+  if (entry.protected) { showToast('Already locked. Stay sharp.', 'good'); return; }
+
+  const done = todayChecked();
+  const total = CHECKLIST.length;
+
+  if (done < total && state.strictMode) {
+    showModal(
+      '⚠️ Incomplete',
+      `You've only completed ${done}/${total} tasks. Strict mode means you need all ${total}. Either finish the rest or you cannot lock in.`,
+      null, 'Back'
+    );
+    return;
+  }
+
+  if (done < total) {
+    showModal(
+      'Warning Mode',
+      `${total - done} task(s) incomplete. Streak protected with warning. Strict mode would have reset you.`,
+      () => { lockStreak(entry); }, 'Lock In Anyway'
+    );
+    return;
+  }
+
+  lockStreak(entry);
+}
+
+function lockStreak(entry) {
+  entry.protected = true;
+  const d = today();
+  const last = state.lastDate;
+
+  // Calculate new streak value
+  if (!last || last === d) {
+    // First ever lock OR already locked today - just ensure minimum 1
+    if (!last) state.streak = 1;
+    // if last===d, streak already counted, don't change
+  } else {
+    const diff = Math.floor((new Date(d) - new Date(last)) / 86400000);
+    if (diff === 1 && state.history[last] && state.history[last].protected) {
+      // Consecutive day - increment
+      state.streak++;
+    } else {
+      // Gap in days - reset to 1
+      state.streak = 1;
+    }
+  }
+
+  state.lastDate = d;
+  if (state.streak > state.bestStreak) state.bestStreak = state.streak;
+  saveState();
+  renderChecklist();
+  updateDashboard();
+  playSound('streak');
+  showToast(`🔥 Day ${state.streak} locked. No excuses needed.`, 'good');
+}
+
+// ═══════════════════════════════════════════
+//  WORKOUT
+// ═══════════════════════════════════════════
+function renderWorkout() {
+  const days = Object.keys(WORKOUTS);
+  const tabs = document.getElementById('dayTabs');
+  tabs.innerHTML = '';
+  days.forEach(day => {
+    const short = day.split(': ')[1];
+    tabs.innerHTML += `<button class="day-tab ${day === state.activeWorkoutDay ? 'active' : ''}" onclick="selectDay('${day}',this)">${short}</button>`;
+  });
+  renderExercises();
+}
+
+function selectDay(day, btn) {
+  state.activeWorkoutDay = day;
+  document.querySelectorAll('.day-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  renderExercises();
+  saveState();
+}
+
+function renderExercises() {
+  const day = state.activeWorkoutDay;
+  const exercises = WORKOUTS[day];
+  const todayKey = today() + '_' + day;
+  const done = state.reps && state.reps[todayKey + '_done'];
+
+  let html = `<div class="card-title">${day}</div>`;
+  exercises.forEach((ex, i) => {
+    const key = `${day}_${i}`;
+    const val = (state.reps && state.reps[key]) || '';
+    html += `
+      <div class="exercise-row">
+        <img class="ex-img" src="${ex.img}" alt="${ex.name}" onerror="this.style.display='none'">
+        <div class="ex-info">
+          <div class="ex-name">${ex.name}</div>
+          <div class="ex-sets">${ex.sets}</div>
+        </div>
+        <input class="rep-input" type="number" min="0" max="999" placeholder="reps" value="${val}"
+          onchange="saveReps('${key}', this.value)" oninput="saveReps('${key}', this.value)">
+      </div>`;
+  });
+
+  html += `<button class="done-btn ${done ? 'completed' : ''}" onclick="markWorkoutDone('${todayKey}')">
+    ${done ? '✓ WORKOUT LOGGED' : 'MARK WORKOUT DONE'}
+  </button>`;
+
+  document.getElementById('workoutContent').innerHTML = html;
+}
+
+function saveReps(key, val) {
+  if (!state.reps) state.reps = {};
+  state.reps[key] = val;
+  saveState();
+}
+
+function markWorkoutDone(key) {
+  if (!state.reps) state.reps = {};
+  state.reps[key + '_done'] = true;
+  const entry = todayEntry();
+  entry.checklist.workout = true;
+  state.lastDate = today();
+  saveState();
+  renderExercises();
+  showToast('💪 Workout logged. You either did it or you didn\'t.', 'good');
+}
+
+// ═══════════════════════════════════════════
+//  DIET
+// ═══════════════════════════════════════════
+function setDiet(mode) {
+  state.dietMode = mode;
+  saveState();
+  renderDiet();
+  document.getElementById('dietBulk').classList.toggle('active', mode === 'bulk');
+  document.getElementById('dietCut').classList.toggle('active', mode === 'cut');
+}
+
+function renderDiet() {
+  const d = DIET[state.dietMode];
+  document.getElementById('dietBulk').classList.toggle('active', state.dietMode === 'bulk');
+  document.getElementById('dietCut').classList.toggle('active', state.dietMode === 'cut');
+
+  let html = '';
+  Object.entries(d.meals).forEach(([meal, items]) => {
+    html += `<div class="meal-card">
+      <div class="meal-time">${meal}</div>
+      <ul class="meal-items">${items.map(i => `<li>${i}</li>`).join('')}</ul>
+    </div>`;
+  });
+  document.getElementById('dietContent').innerHTML = html;
+
+  document.getElementById('schBreakfast').textContent = d.schedule.b;
+  document.getElementById('schLunch').textContent = d.schedule.l;
+  document.getElementById('schDinner').textContent = d.schedule.d;
+
+  const todayFollowed = todayEntry().checklist.meals;
+  document.getElementById('dietYes').classList.toggle('active', todayFollowed === true);
+  document.getElementById('dietNo').classList.toggle('active', todayFollowed === false);
+}
+
+function logDiet(val) {
+  const entry = todayEntry();
+  entry.checklist.meals = val;
+  state.lastDate = today();
+  saveState();
+  document.getElementById('dietYes').classList.toggle('active', val === true);
+  document.getElementById('dietNo').classList.toggle('active', val === false);
+  if (val) showToast('Diet on point. Keep stacking.', 'good');
+  else showToast('Slipped on diet. Don\'t repeat it.', 'bad');
+  updateDashboard();
+}
+
+// ═══════════════════════════════════════════
+//  PROGRESS
+// ═══════════════════════════════════════════
+function renderProgress() {
+  const days = Object.keys(state.history);
+  const last30 = days.filter(d => {
+    const diff = Math.floor((new Date(today()) - new Date(d)) / 86400000);
+    return diff >= 0 && diff < 30;
+  });
+  const done = last30.filter(d => state.history[d].protected).length;
+  const pct = last30.length > 0 ? Math.round((done / Math.max(last30.length, 1)) * 100) : 0;
+
+  document.getElementById('consistencyPct').textContent = pct + '%';
+  document.getElementById('consistencyBar').style.width = pct + '%';
+
+  // weight history
+  const wh = document.getElementById('weightHistory');
+  if (!state.weights || state.weights.length === 0) {
+    wh.innerHTML = '<span style="color:var(--text3);font-size:13px;">No data yet. Start logging.</span>';
+  } else {
+    wh.innerHTML = [...state.weights].reverse().slice(0, 10).map(w => `
+      <div class="history-row">
+        <span class="h-date">${w.date}</span>
+        <span class="h-weight">${w.kg} kg</span>
+        <span class="h-feel ${w.feel ? 'yes' : 'no'}">${w.feel ? '↑ Stronger' : '→ Same'}</span>
+      </div>`).join('');
+  }
+}
+
+let pendingFeel = null;
+function logFeel(val) {
+  pendingFeel = val;
+  document.getElementById('feelYes').classList.toggle('active', val === true);
+  document.getElementById('feelNo').classList.toggle('active',  val === false);
+}
+
+function logWeight() {
+  const kg = parseFloat(document.getElementById('weightInput').value);
+  if (!kg || kg < 20 || kg > 300) { showToast('Enter a valid weight.', 'bad'); return; }
+  if (!state.weights) state.weights = [];
+  state.weights.push({ date: today(), kg, feel: pendingFeel ?? null });
+  pendingFeel = null;
+  document.getElementById('weightInput').value = '';
+  document.getElementById('feelYes').classList.remove('active');
+  document.getElementById('feelNo').classList.remove('active');
+  saveState();
+  renderProgress();
+  showToast('Weight logged. Numbers don\'t lie.', 'info');
+}
+
+// ═══════════════════════════════════════════
+//  STRICT TOGGLE
+// ═══════════════════════════════════════════
+function toggleStrict() {
+  state.strictMode = !state.strictMode;
+  document.getElementById('strictPill').classList.toggle('active', state.strictMode);
+  saveState();
+  const msg = state.strictMode
+    ? '🔒 Strict mode ON. No mercy.'
+    : '⚠️ Strict mode OFF. Warning system active.';
+  showToast(msg, state.strictMode ? 'bad' : 'info');
+}
+
+// ═══════════════════════════════════════════
+//  MODAL
+// ═══════════════════════════════════════════
+function showModal(title, body, onConfirm, confirmLabel) {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalBody').textContent = body;
+  const btn = document.getElementById('modalConfirm');
+  btn.textContent = confirmLabel || 'Understood';
+  btn.onclick = () => { closeModal(); if (onConfirm) onConfirm(); };
+  document.getElementById('modalCancel').style.display = onConfirm ? '' : 'none';
+  document.getElementById('modalBg').classList.add('show');
+}
+function closeModal() {
+  document.getElementById('modalBg').classList.remove('show');
+}
+document.getElementById('modalBg').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+// ═══════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════
+let toastTimer;
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast ${type} show`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+// ═══════════════════════════════════════════
+//  SOUND
+// ═══════════════════════════════════════════
+function playSound(type) {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const now = ctx.currentTime;
+    if (type === 'streak') {
+      [[523,0],[659,0.1],[784,0.2],[1047,0.3]].forEach(([freq, t]) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.frequency.value = freq;
+        osc.type = 'sine';
+        gain.gain.setValueAtTime(0, now + t);
+        gain.gain.linearRampToValueAtTime(0.18, now + t + 0.02);
+        gain.gain.linearRampToValueAtTime(0, now + t + 0.25);
+        osc.start(now + t); osc.stop(now + t + 0.3);
+      });
+    }
+  } catch(e) {}
+}
+
+// ═══════════════════════════════════════════
+//  STREAK INIT — robust
+// ═══════════════════════════════════════════
+function initStreak() {
+  // Handled by checkStreakOnLoad - this function kept for compatibility
+}
+
+// ═══════════════════════════════════════════
+//  DOWNLOAD
+// ═══════════════════════════════════════════
+function downloadApp() {
+  const html = document.documentElement.outerHTML;
+  const blob = new Blob([html], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'StreakBuilt.html';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('⬇ Downloaded! Open the file in your browser.', 'good');
+}
+
+// ═══════════════════════════════════════════
+//  AUTH — Email + PIN gate
+// ═══════════════════════════════════════════
+const AUTH = { email: 'gleedsauto@gmail.com', pin: '7154' };
+const SESSION_KEY = 'sb_session';
+let pinBuffer = '';
+let rememberMe = true;
+
+function isAuthenticated() {
+  try {
+    const s = localStorage.getItem(SESSION_KEY);
+    if (!s) return false;
+    const { token, expiry } = JSON.parse(s);
+    if (token !== btoa(AUTH.email + AUTH.pin)) return false;
+    if (expiry && Date.now() > expiry) { localStorage.removeItem(SESSION_KEY); return false; }
+    return true;
+  } catch { return false; }
+}
+
+function grantAccess() {
+  const lock = document.getElementById('lockScreen');
+  lock.style.animation = 'fadeOut 0.4s ease forwards';
+  setTimeout(() => lock.classList.add('hidden'), 400);
+}
+
+function submitEmail() {
+  const val = document.getElementById('emailInput').value.trim().toLowerCase();
+  const err = document.getElementById('emailErr');
+  if (val !== AUTH.email) {
+    err.textContent = 'Access denied. Unrecognised email.';
+    document.getElementById('emailInput').classList.add('error');
+    setTimeout(() => document.getElementById('emailInput').classList.remove('error'), 600);
+    return;
+  }
+  err.textContent = '';
+  document.getElementById('stepEmail').style.display = 'none';
+  document.getElementById('stepPin').style.display = 'block';
+}
+
+function pinKey(digit) {
+  if (pinBuffer.length >= 4) return;
+  pinBuffer += digit;
+  updatePinDots();
+  if (pinBuffer.length === 4) {
+    setTimeout(checkPin, 120);
+  }
+}
+
+function pinBack() {
+  pinBuffer = pinBuffer.slice(0, -1);
+  updatePinDots();
+  document.getElementById('pinErr').textContent = '';
+}
+
+function updatePinDots(state) {
+  for (let i = 0; i < 4; i++) {
+    const dot = document.getElementById('pd' + i);
+    dot.classList.remove('filled', 'error');
+    if (state === 'error') dot.classList.add('error');
+    else if (i < pinBuffer.length) dot.classList.add('filled');
+  }
+}
+
+function checkPin() {
+  if (pinBuffer === AUTH.pin) {
+    updatePinDots('filled');
+    // Save session
+    const expiry = rememberMe ? null : (Date.now() + 8 * 60 * 60 * 1000); // 8h if not remembered
+    localStorage.setItem(SESSION_KEY, JSON.stringify({
+      token: btoa(AUTH.email + AUTH.pin),
+      expiry
+    }));
+    setTimeout(grantAccess, 200);
+  } else {
+    updatePinDots('error');
+    document.getElementById('pinErr').textContent = 'Wrong PIN. Try again.';
+    setTimeout(() => {
+      pinBuffer = '';
+      updatePinDots();
+      document.getElementById('pinErr').textContent = '';
+    }, 900);
+  }
+}
+
+function toggleRemember() {
+  rememberMe = !rememberMe;
+  document.getElementById('rememberBox').classList.toggle('checked', rememberMe);
+}
+
+function doLogout() {
+  localStorage.removeItem(SESSION_KEY);
+  pinBuffer = '';
+  document.getElementById('stepEmail').style.display = 'block';
+  document.getElementById('stepPin').style.display = 'none';
+  document.getElementById('emailInput').value = '';
+  document.getElementById('emailErr').textContent = '';
+  updatePinDots();
+  const lock = document.getElementById('lockScreen');
+  lock.classList.remove('hidden');
+  lock.style.animation = 'fadeIn 0.3s ease';
+}
+
+// inject fadeOut keyframe
+const styleEl = document.createElement('style');
+styleEl.textContent = `@keyframes fadeOut { from{opacity:1} to{opacity:0} }`;
+document.head.appendChild(styleEl);
+
+// ═══════════════════════════════════════════
+//  BOOT
+// ═══════════════════════════════════════════
+(function init() {
+  // Auth gate
+  document.getElementById('rememberBox').classList.add('checked'); // default checked
+  if (isAuthenticated()) {
+    document.getElementById('lockScreen').classList.add('hidden');
+  }
+  // Allow Enter key on email input
+  document.getElementById('emailInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') submitEmail();
+  });
+
+  document.getElementById('strictPill').classList.toggle('active', state.strictMode);
+  initStreak();
+  updateDashboard();
+})();
+</script>
+
+<script>
+// ── PWA SERVICE WORKER + INSTALL PROMPT ──
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  // Show install banner after 2s
+  setTimeout(() => {
+    if (deferredPrompt) showInstallBanner();
+  }, 2000);
+});
+
+function showInstallBanner() {
+  const banner = document.createElement('div');
+  banner.id = 'installBanner';
+  banner.innerHTML = `
+    <div style="
+      position:fixed; bottom:90px; left:50%; transform:translateX(-50%);
+      background:#0f1117; border:1px solid #00f5a0;
+      border-radius:16px; padding:14px 18px;
+      display:flex; align-items:center; gap:14px;
+      max-width:360px; width:calc(100% - 40px);
+      z-index:9000; box-shadow:0 0 30px rgba(0,245,160,0.15);
+      animation: slideUp 0.4s ease;
+    ">
+      <div style="width:42px;height:42px;background:#161820;border-radius:12px;border:1px solid #252840;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <svg width="22" height="22" viewBox="0 0 44 44" fill="none"><polygon points="25,3 11,22 21,22 19,41 33,22 23,22" fill="#00f5a0"/></svg>
+      </div>
+      <div style="flex:1;">
+        <div style="font-family:'DM Sans',sans-serif;font-weight:700;font-size:13px;color:#f2f4ff;">Install StreakBuilt</div>
+        <div style="font-family:'DM Sans',sans-serif;font-size:11px;color:#7b7f9e;margin-top:2px;">Add to home screen for the full app experience</div>
+      </div>
+      <button onclick="installApp()" style="background:#00f5a0;border:none;border-radius:10px;padding:8px 14px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:700;color:#000;cursor:pointer;white-space:nowrap;">INSTALL</button>
+      <button onclick="document.getElementById('installBanner').remove()" style="background:none;border:none;color:#3d4060;font-size:18px;cursor:pointer;padding:0 2px;line-height:1;">×</button>
+    </div>
+    <style>@keyframes slideUp{from{opacity:0;transform:translateX(-50%) translateY(20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}</style>
+  `;
+  document.body.appendChild(banner);
+}
+
+async function installApp() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  deferredPrompt = null;
+  document.getElementById('installBanner')?.remove();
+  if (outcome === 'accepted') showToast('✓ App installed! Find it on your home screen.', 'good');
+}
+
+window.addEventListener('appinstalled', () => {
+  deferredPrompt = null;
+  document.getElementById('installBanner')?.remove();
+});
+</script>
+</body>
+</html>
